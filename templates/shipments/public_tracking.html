@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Tracking {{ shipment.tracking_number }} - {{ app_vars.SITE_NAME|default:"US Logistics" }}{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-12">
+    <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
+        <div>
+            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Public Tracking</span>
+            <h1 class="text-2xl font-bold text-gray-900 mt-2">Consignment #{{ shipment.tracking_number }}</h1>
+        </div>
+        <a href="/" class="text-sm font-medium text-blue-600 hover:underline">&larr; Back to Home</a>
+    </div>
+
+    <!-- Status Card -->
+    <div class="bg-white shadow-sm rounded-2xl p-8 border border-gray-200 mb-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div>
+            <p class="text-[11px] uppercase font-bold text-gray-400 tracking-wider">Current Status</p>
+            <p class="text-lg font-bold text-blue-600 mt-1">{{ shipment.get_status_display|default:shipment.status }}</p>
+        </div>
+        <div>
+            <p class="text-[11px] uppercase font-bold text-gray-400 tracking-wider">Origin</p>
+            <p class="text-sm font-semibold text-gray-800 mt-1">{{ shipment.origin.name|default:"Origin Hub" }}</p>
+        </div>
+        <div>
+            <p class="text-[11px] uppercase font-bold text-gray-400 tracking-wider">Destination</p>
+            <p class="text-sm font-semibold text-gray-800 mt-1">{{ shipment.destination.name|default:"Destination Hub" }}</p>
+        </div>
+    </div>
+
+    <!-- Map Section (If coordinates available) -->
+    {% if shipment.current_location and shipment.current_location.latitude and shipment.current_location.longitude %}
+    <div class="bg-white shadow-sm rounded-2xl p-6 border border-gray-200">
+        <h3 class="text-sm font-bold text-gray-900 mb-4">Live Shipment Location</h3>
+        <div id="tracking-map" class="w-full h-96 rounded-xl z-10"></div>
+    </div>
+    {% endif %}
+</div>
+
+{% block extra_js %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% if shipment.current_location and shipment.current_location.latitude and shipment.current_location.longitude %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const lat = {{ shipment.current_location.latitude }};
+        const lng = {{ shipment.current_location.longitude }};
+        
+        const map = L.map('tracking-map').setView([lat, lng], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        L.marker([lat, lng]).addTo(map)
+            .bindPopup("<b>Current Location:</b> {{ shipment.current_location.name }}")
+            .openPopup();
+    });
+</script>
+{% endif %}
+{% endblock %}
+{% endblock %}

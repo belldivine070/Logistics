@@ -1,0 +1,84 @@
+{% extends 'base_admin.html' %}
+{% block title %}{% if form.instance.pk %}Edit Shipment{% else %}Create Shipment{% endif %} - Admin{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-5xl mx-auto">
+    <!-- Header Section -->
+    <div class="mb-6 pb-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">{% if form.instance.pk %}Edit Shipment Profile{% else %}Create New Consignment{% endif %}</h1>
+            <p class="text-sm text-gray-500 mt-1">Configure shipment identifiers, routing locations, and consignment parameters.</p>
+        </div>
+        <div class="flex items-center space-x-2">
+            <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 shadow-sm">
+                Secure Logistics Portal
+            </span>
+        </div>
+    </div>
+
+    <!-- Form Card Container -->
+    <div class="bg-white shadow-sm rounded-2xl border border-gray-200 overflow-hidden">
+        <form method="post" class="p-8">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="mb-6 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-xs font-medium">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <!-- Two-Column Grid Layout to prevent long vertical scrolling -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                {% for field in form %}
+                <div class="space-y-1.5">
+                    <label class="block text-[11px] font-extrabold text-gray-700 uppercase tracking-wider">{{ field.label }}</label>
+                    
+                    <!-- Render customized widget styling across inputs -->
+                    <div class="relative">
+                        {{ field }}
+                    </div>
+
+                    {% if field.help_text %}
+                        <p class="text-[11px] text-gray-400 mt-1">{{ field.help_text }}</p>
+                    {% endif %}
+                    
+                    {% for error in field.errors %}
+                        <p class="text-xs text-red-600 mt-1 font-medium">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Action Buttons Footer -->
+            <div class="flex items-center justify-end space-x-4 pt-6 mt-8 border-t border-gray-100">
+                <a href="{% url 'admin_shipment_list' %}" class="bg-gray-50 hover:bg-gray-100 text-gray-700 px-6 py-2.5 rounded-xl text-xs font-bold transition border border-gray-200 shadow-2xs">
+                    Cancel
+                </a>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-7 py-2.5 rounded-xl text-xs font-bold shadow-sm transition flex items-center">
+                    <span>Save Shipment</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Form Styling Enhancement Script (Forces clean text inputs where appropriate instead of long dropdowns) -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Automatically inject enterprise Tailwind classes into form widgets rendered by Django
+        const inputs = document.querySelectorAll('input, select, textarea');
+        inputs.forEach(el => {
+            if (el.type !== 'checkbox' && el.type !== 'radio') {
+                el.classList.add(
+                    'w-full', 'bg-gray-50', 'border', 'border-gray-300', 
+                    'rounded-xl', 'px-4', 'py-2.5', 'text-sm', 'text-gray-900',
+                    'focus:outline-none', 'focus:ring-2', 'focus:ring-blue-500', 'focus:bg-white', 'transition'
+                );
+            }
+        });
+    });
+</script>
+{% endblock %}

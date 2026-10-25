@@ -1,0 +1,66 @@
+<!-- templates/shipments/tracking_detail.html -->
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="bg-white shadow rounded-lg p-6 mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 mb-6">
+            <div>
+                <span class="text-sm text-gray-500 uppercase tracking-wider">Tracking Number</span>
+                <h1 class="text-2xl font-bold text-gray-900">{{ shipment.tracking_number }}</h1>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <span class="px-3 py-1 text-sm font-semibold rounded-full 
+                    {% if shipment.status == 'DELIVERED' %} bg-green-100 text-green-800 
+                    {% else %} bg-blue-100 text-blue-800 {% endif %}">
+                    {{ shipment.get_status_display }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Current Location Box -->
+        {% if shipment.current_location %}
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <h3 class="text-sm font-medium text-gray-500 uppercase">Current Location</h3>
+            <p class="text-lg font-semibold text-gray-800 mt-1">{{ shipment.current_location.name }}</p>
+            <p class="text-gray-600">{{ shipment.current_location.address }}, {{ shipment.current_location.city }}, {{ shipment.current_location.state }} {{ shipment.current_location.postal_code }}, {{ shipment.current_location.country }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Leaflet Map Container -->
+        <div class="mb-6">
+            <h3 class="text-sm font-medium text-gray-500 uppercase mb-2">Live Shipment Map</h3>
+            <div id="shipment-map" class="w-full h-96 rounded-lg shadow-inner z-0"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet CDN Styles & Scripts -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        {% if shipment.current_location and shipment.current_location.latitude and shipment.current_location.longitude %}
+        var lat = {{ shipment.current_location.latitude }};
+        var lon = {{ shipment.current_location.longitude }};
+        
+        var map = L.map('shipment-map').setView([lat, lon], 12);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        L.marker([lat, lon]).addTo(map)
+            .bindPopup("<b>Current Location</b><br>{{ shipment.current_location.name }}")
+            .openPopup();
+        {% else %}
+        // Default US view if coordinates are not yet populated
+        var map = L.map('shipment-map').setView([39.8283, -98.5795], 4);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+        {% endif %}
+    });
+</script>
+{% endblock %}

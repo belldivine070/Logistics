@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}{{ app_vars.SITE_NAME|default:"Global Logistics & Consignment" }}{% endblock %}
+
+{% block content %}
+<!-- Hero Section & Public Tracking Input -->
+<div class="relative bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white py-24 lg:py-32 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="max-w-3xl">
+            <span class="bg-blue-600 text-blue-100 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Enterprise Logistics Platform</span>
+            <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight mt-4 mb-6 leading-tight">
+                {{ app_vars.SITE_NAME|default:"Seamless US & International Supply Chain Solutions" }}
+            </h1>
+            <p class="text-lg sm:text-xl text-blue-100 mb-10 leading-relaxed">
+                {{ app_vars.SITE_DESCRIPTION|default:"Professional US-based international freight forwarding, secure air/sea shipping, customs compliance, and real-time consignment tracking." }}
+            </p>
+            
+            <!-- Public Quick Track Box (Works for Non-Logged-in Users) -->
+            <div class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 max-w-xl">
+                <form id="public-track-form" onsubmit="handlePublicTrack(event)" class="flex gap-2">
+                    <input id="public-track-input" type="text" placeholder="Enter Tracking Number (e.g. TRK-1002)..." class="flex-1 bg-white text-gray-800 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl text-sm font-semibold transition shadow-md">
+                        Track Now
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Services Section -->
+<div id="services" class="py-24 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+            <h2 class="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">Our Capabilities</h2>
+            <h3 class="text-3xl font-bold text-gray-900">Comprehensive Global Freight Services</h3>
+            <p class="text-sm text-gray-600 mt-2">End-to-end logistics engineered for reliability, security, and speed.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition">
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-bold text-lg mb-6">✈️</div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">Air Freight Forwarding</h4>
+                <p class="text-xs text-gray-600 leading-relaxed">Fast and secure international air cargo transport with priority airline partnerships and real-time checkpoint updates.</p>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition">
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-bold text-lg mb-6">🚢</div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">Ocean & Sea Shipping</h4>
+                <p class="text-xs text-gray-600 leading-relaxed">Cost-effective FCL and LCL container shipping across major global trade lanes with full customs brokerage support.</p>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition">
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-bold text-lg mb-6">🏢</div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">Warehousing & Consignment</h4>
+                <p class="text-xs text-gray-600 leading-relaxed">Secure US-based consolidation hubs, inventory management, pick-and-pack services, and final-mile distribution.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Live Support Callout Section -->
+<div class="py-16 bg-blue-600 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-6">
+        <div>
+            <h3 class="text-2xl font-bold">Have Questions About Rates or Transit Times?</h3>
+            <p class="text-xs text-blue-100 mt-1">Our live support desk is online right now. Click the chat bubble in the bottom right corner to inquire instantly.</p>
+        </div>
+        <button onclick="document.getElementById('chat-toggle-btn').click();" class="bg-white text-blue-900 hover:bg-blue-50 px-6 py-3 rounded-xl text-sm font-semibold shadow transition whitespace-nowrap">
+            Start Live Chat
+        </button>
+    </div>
+</div>
+
+<!-- Contact Screen Section -->
+<div id="contact" class="py-24 bg-white border-t border-gray-100">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">Get In Touch</h2>
+        <h3 class="text-3xl font-bold text-gray-900 mb-6">Contact Our Operations Center</h3>
+        <div class="bg-gray-50 p-8 rounded-2xl shadow-sm border border-gray-200 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+            <div>
+                <p class="text-[11px] uppercase font-bold text-gray-400 tracking-wider">Email Us</p>
+                <p class="text-sm font-semibold text-gray-800 mt-1">{{ app_vars.SUPPORT_EMAIL|default:"support@uslogistics-example.com" }}</p>
+            </div>
+            <div>
+                <p class="text-[11px] uppercase font-bold text-gray-400 tracking-wider">Call Support</p>
+                <p class="text-sm font-semibold text-gray-800 mt-1">{{ app_vars.COMPANY_PHONE|default:"+1 (800) 555-0199" }}</p>
+            </div>
+            <div>
+                <p class="text-[11px] uppercase font-bold text-gray-400 tracking-wider">Headquarters</p>
+                <p class="text-sm font-semibold text-gray-800 mt-1">{{ app_vars.COMPANY_ADDRESS|default:"New York, NY 10005" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function handlePublicTrack(e) {
+        e.preventDefault();
+        const trackingNum = document.getElementById('public-track-input').value.trim();
+        if (trackingNum) {
+            window.location.href = `/shipments/track/${trackingNum}/`;
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Shipment {{ shipment.tracking_number }} - {{ app_vars.SITE_NAME|default:"US Logistics" }}{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-12">
+    <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
+        <div>
+            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Consignment Detail</span>
+            <h1 class="text-2xl font-bold text-gray-900 mt-2">Tracking #{{ shipment.tracking_number }}</h1>
+        </div>
+        <a href="{% url 'customer_portal' %}" class="text-sm font-medium text-blue-600 hover:underline">&larr; Back to My Shipments</a>
+    </div>
+
+    <!-- Status & Overview Card -->
+    <div class="bg-white shadow-sm rounded-2xl p-8 border border-gray-200 mb-8 grid grid-cols-1 sm:grid-cols-4 gap-6">
+        <div>
+            <p class="text-[11px] uppercase font-bold text-gray-400 tracking-wider">Current Status</p>
+            <p class="text-base font-bold text-blue-600 mt-1">{{ shipment.get_status_display|default:shipment.status }}</p>
+        </div>
+        <div>
+            <p class="text-[11px] uppercase font-bold text-gray-400 tracking-wider">Service Type</p>
+            <p class="text-sm font-semibold text-gray-800 mt-1">{{ shipment.service_type|default:"Standard Freight" }}</p>
+        </div>
+        <div>
+            <p class="text-[11px] uppercase font-bold text-gray-400 tracking-wider">Origin</p>
+            <p class="text-sm font-semibold text-gray-800 mt-1">{{ shipment.origin.name|default:"N/A" }}</p>
+        </div>
+        <div>
+            <p class="text-[11px] uppercase font-bold text-gray-400 tracking-wider">Destination</p>
+            <p class="text-sm font-semibold text-gray-800 mt-1">{{ shipment.destination.name|default:"N/A" }}</p>
+        </div>
+    </div>
+
+    <!-- Map Section (If coordinates available) -->
+    {% if shipment.current_location and shipment.current_location.latitude and shipment.current_location.longitude %}
+    <div class="bg-white shadow-sm rounded-2xl p-6 border border-gray-200 mb-8">
+        <h3 class="text-sm font-bold text-gray-900 mb-4">Live Transit Position</h3>
+        <div id="customer-tracking-map" class="w-full h-96 rounded-xl z-10"></div>
+    </div>
+    {% endif %}
+
+    <!-- Checkpoint Events History -->
+    <div class="bg-white shadow-sm rounded-2xl p-8 border border-gray-200">
+        <h3 class="text-sm font-bold text-gray-900 mb-6">Transit Milestones & History</h3>
+        <div class="space-y-6">
+            {% if shipment.events.all %}
+                {% for event in shipment.events.all %}
+                <div class="flex items-start space-x-4 border-l-2 border-blue-600 pl-4 py-1">
+                    <div>
+                        <p class="text-xs font-bold text-gray-900">{{ event.status }}</p>
+                        <p class="text-xs text-gray-600 mt-0.5">{{ event.description }}</p>
+                        <p class="text-[10px] text-gray-400 mt-1">{{ event.timestamp|date:"M d, Y H:i" }} — Location: {{ event.location.name|default:"In Transit" }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-xs text-gray-500">Consignment is currently being prepared for dispatch.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% if shipment.current_location and shipment.current_location.latitude and shipment.current_location.longitude %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const lat = {{ shipment.current_location.latitude }};
+        const lng = {{ shipment.current_location.longitude }};
+        
+        const map = L.map('customer-tracking-map').setView([lat, lng], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        L.marker([lat, lng]).addTo(map)
+            .bindPopup("<b>Current Location:</b> {{ shipment.current_location.name }}")
+            .openPopup();
+    });
+</script>
+{% endif %}
+{% endblock %}
+{% endblock %}

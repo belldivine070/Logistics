@@ -1,0 +1,162 @@
+{% extends 'base_admin.html' %}
+{% block title %}Chat Room - {{ conversation.conversation_id }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-6 h-[calc(100vh-5rem)]">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+        
+        <!-- Left Column: Customer & Shipment Metadata Sidebar -->
+        <div class="bg-white shadow-sm rounded-2xl p-6 flex flex-col space-y-6 overflow-y-auto border border-gray-200">
+            <div>
+                <a href="{% url 'admin_support_inbox' %}" class="text-xs font-semibold text-blue-600 hover:underline mb-4 inline-flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to Support Inbox
+                </a>
+                <h2 class="text-base font-extrabold text-gray-900 tracking-tight">Conversation Details</h2>
+                <p class="text-xs font-mono text-gray-400 mt-0.5">ID: {{ conversation.conversation_id }}</p>
+            </div>
+
+            <!-- Customer Info Box -->
+            <div class="bg-gray-50/70 p-4 rounded-xl border border-gray-100">
+                <h3 class="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Customer Information</h3>
+                <p class="text-sm font-bold text-gray-900">
+                    {% if conversation.customer %}
+                        {{ conversation.customer.username }} 
+                    {% else %}
+                        {{ conversation.guest_name|default:"Anonymous Visitor" }}
+                    {% endif %}
+                </p>
+                <p class="text-xs text-gray-500 mt-0.5">{{ conversation.guest_email|default:conversation.customer.email|default:"No email provided" }}</p>
+            </div>
+
+            <!-- Associated Shipment Box -->
+            <div class="bg-gray-50/70 p-4 rounded-xl border border-gray-100">
+                <h3 class="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">Linked Shipment</h3>
+                {% if shipment %}
+                    <p class="text-xs font-bold text-blue-600">{{ shipment.tracking_number }}</p>
+                    <p class="text-xs text-gray-600 mt-1">Status: <span class="font-semibold">{{ shipment.get_status_display }}</span></p>
+                    <p class="text-xs text-gray-600 mt-0.5">Location: <span class="font-semibold">{{ shipment.current_location.name|default:"Not Assigned" }}</span></p>
+                    <a href="{% url 'admin_shipment_update' shipment.pk %}" target="_blank" class="text-xs text-blue-600 hover:underline mt-2.5 inline-block font-semibold">View Shipment Details &rarr;</a>
+                {% else %}
+                    <p class="text-xs text-gray-400 italic">No tracking number associated with this chat session.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Column: Real-Time Chat Workspace -->
+        <div class="bg-white shadow-sm rounded-2xl flex flex-col lg:col-span-2 overflow-hidden border border-gray-200 h-full">
+            <!-- Chat Header -->
+            <div class="bg-gray-50/70 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900">Live Support Workspace</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Status: <span class="text-emerald-600 font-bold uppercase tracking-wider text-[10px] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">{{ conversation.status|default:"Active" }}</span></p>
+                </div>
+                <div class="flex items-center space-x-1.5 text-xs text-gray-400 font-medium">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Real-time active</span>
+                </div>
+            </div>
+
+            <!-- Messages Thread Container -->
+            <div id="chat-messages-container" class="flex-1 p-6 overflow-y-auto space-y-4 bg-gray-50/30">
+                {% for msg in messages_list %}
+                    <div class="flex flex-col {% if msg.sender_type == 'SUPPORT' or msg.sender_type == 'ADMIN' %}items-end{% else %}items-start{% endif %}">
+                        <div class="flex items-center space-x-1.5 mb-1">
+                            <span class="text-[11px] font-bold text-gray-600">
+                                {% if msg.sender_type == 'SUPPORT' or msg.sender_type == 'ADMIN' %}Support Staff{% else %}{{ conversation.customer.username|default:"Customer" }}{% endif %}
+                            </span>
+                            <span class="text-[10px] text-gray-400">{{ msg.timestamp|date:"M d, g:i a" }}</span>
+                        </div>
+                        <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-sm {% if msg.sender_type == 'SUPPORT' or msg.sender_type == 'ADMIN' %}bg-blue-600 text-white rounded-br-none{% else %}bg-white text-gray-800 border border-gray-200 rounded-bl-none shadow-sm{% endif %}">
+                            {{ msg.message }}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center text-gray-400 text-xs py-24">
+                        No messages in this conversation yet. Send a reply below to begin the session.
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Reply Form (WebSocket Enabled) -->
+            <div class="p-4 bg-white border-t border-gray-200">
+                <form id="chat-reply-form" class="flex gap-3 items-center">
+                    {% csrf_token %}
+                    <div class="flex-1">
+                        <input type="text" id="chat-message-input" placeholder="Type your response to the customer..." class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required autocomplete="off">
+                    </div>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-sm transition shrink-0 flex items-center">
+                        <span>Send</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Real-Time WebSocket Script for Instant Messaging -->
+<script>
+    const conversationId = "{{ conversation.conversation_id }}";
+    const currentUsername = "{{ request.user.username }}";
+    
+    // Setup WebSocket protocol
+    const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+    const chatSocket = new WebSocket(
+        wsScheme + '://' + window.location.host + '/ws/support/' + conversationId + '/'
+    );
+
+    const messageContainer = document.getElementById('chat-messages-container');
+
+    // Auto-scroll chat to bottom on load
+    if (messageContainer) {
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const isSelf = data.sender === currentUsername || data.sender_type === 'SUPPORT';
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `flex flex-col ${isSelf ? 'items-end' : 'items-start'} mt-4`;
+        
+        messageDiv.innerHTML = `
+            <div class="flex items-center space-x-1.5 mb-1">
+                <span class="text-[11px] font-bold text-gray-600">${data.sender || (isSelf ? 'Support Staff' : 'Customer')}</span>
+                <span class="text-[10px] text-gray-400">Just now</span>
+            </div>
+            <div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${isSelf ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none shadow-sm'}">
+                ${data.message}
+            </div>
+        `;
+        
+        messageContainer.appendChild(messageDiv);
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat websocket connection closed unexpectedly.');
+    };
+
+    // Send message via WebSocket instead of standard page POST submission
+    document.getElementById('chat-reply-form').onsubmit = function(e) {
+        e.preventDefault();
+        const messageInputDom = document.getElementById('chat-message-input');
+        const message = messageInputDom.value.trim();
+        
+        if (!message) return;
+
+        chatSocket.send(JSON.stringify({
+            'message': message,
+            'sender_type': 'SUPPORT'
+        }));
+
+        messageInputDom.value = '';
+    };
+</script>
+{% endblock %}

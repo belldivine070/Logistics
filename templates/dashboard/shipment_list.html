@@ -1,0 +1,53 @@
+{% extends 'base_admin.html' %}
+{% block title %}Shipments Management - Admin{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-6xl mx-auto">
+    <div class="mb-8 border-b pb-4 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Shipments Management</h1>
+            <p class="text-sm text-gray-600">Track, create, and update international consignments and routing status.</p>
+        </div>
+        <a href="{% url 'admin_shipment_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-semibold shadow transition">
+            + New Shipment
+        </a>
+    </div>
+
+    <div class="bg-white shadow-sm rounded-2xl border border-gray-200 overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wider font-semibold">
+                <tr>
+                    <th class="px-6 py-3">Tracking Number</th>
+                    <th class="px-6 py-3">Customer</th>
+                    <th class="px-6 py-3">Status</th>
+                    <th class="px-6 py-3">Destination</th>
+                    <th class="px-6 py-3 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 bg-white">
+                {% if shipments %}
+                    {% for shipment in shipments %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 font-semibold text-gray-900">{{ shipment.tracking_number }}</td>
+                        <td class="px-6 py-4 text-gray-600">{{ shipment.customer.username|default:"Guest/Unassigned" }}</td>
+                        <td class="px-6 py-4">
+                            <span class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                                {{ shipment.get_status_display|default:shipment.status }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">{{ shipment.destination.name|default:"N/A" }}</td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="{% url 'admin_shipment_update' shipment.tracking_number %}" class="text-blue-600 hover:underline text-xs font-medium">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-400 text-xs">No shipments found in the database.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
